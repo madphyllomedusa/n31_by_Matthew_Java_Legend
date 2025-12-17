@@ -313,6 +313,18 @@
           "title": "Презентации",
           "image": "https://avatars.mds.yandex.net/i?id=8cf4526926eb2a43fba77298842822510fc5aa4d-7664017-images-thumbs&n=13",
           "serviceId": "1"
+        },
+        {
+          "id": "105",
+          "title": "ИИ",
+          "image": "https://avatars.mds.yandex.net/i?id=ec806c2691eeeb8fcf37218273a716ce0ee58dff-8981283-images-thumbs&n=13",
+          "serviceId": "8"
+        },
+        {
+          "id": "106",
+          "title": "Аналитика",
+          "image": "https://avatars.mds.yandex.net/i?id=232120f27e904b9a43ccd4aa6d941cd3635191f4-8324697-images-thumbs&n=13",
+          "serviceId": "8"
         }
       ]
     }

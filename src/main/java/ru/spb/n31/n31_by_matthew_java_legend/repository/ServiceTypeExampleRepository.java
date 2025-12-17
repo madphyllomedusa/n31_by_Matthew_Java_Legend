@@ -1,4 +1,11 @@
 package ru.spb.n31.n31_by_matthew_java_legend.repository;
 
-public class ServiceTypeExampleRepository {
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.entity.ServiceTypeExampleEntity;
+
+import java.util.List;
+
+public interface ServiceTypeExampleRepository
+        extends JpaRepository<ServiceTypeExampleEntity, String> {
+    List<ServiceTypeExampleEntity> findAllByType(String serviceType);
 }

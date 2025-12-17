@@ -1,4 +1,9 @@
-package ru.spb.n31.n31_by_matthew_java_legend;
+package ru.spb.n31.n31_by_matthew_java_legend.dto.response;
 
-public record ServiceResponse() {
+public record ServiceResponse(
+        String id,
+        String title,
+        Integer price,
+        String image
+) {
 }

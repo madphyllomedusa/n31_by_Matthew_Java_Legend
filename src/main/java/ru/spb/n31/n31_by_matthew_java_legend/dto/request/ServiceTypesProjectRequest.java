@@ -1,4 +1,9 @@
 package ru.spb.n31.n31_by_matthew_java_legend.dto.request;
 
-public class ServiceTypesProjectRequest {
+import java.util.List;
+
+public record ServiceTypesProjectRequest(
+        String typeId,
+        List<ExampleRequest> examples
+) {
 }
