@@ -21,7 +21,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.service.admin.AdminAboutUsService;
 import java.util.List;
 
 @Tag(name = "Admin: About Us", description = "Редактирование about-us")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/about-us")

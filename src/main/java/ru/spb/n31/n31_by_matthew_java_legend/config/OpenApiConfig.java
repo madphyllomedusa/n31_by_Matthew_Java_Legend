@@ -3,6 +3,7 @@ package ru.spb.n31.n31_by_matthew_java_legend.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springdoc.core.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
@@ -18,11 +19,13 @@ public class OpenApiConfig {
                         .title("Матвей легенда спасибо за апи")
                         .version("v1.0.0")
                         .description("N31 Admin API"))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
-                        .addSecuritySchemes("basicAuth",
+                        .addSecuritySchemes("bearerAuth",
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
-                                        .scheme("basic")
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
                         )
                 );
     }

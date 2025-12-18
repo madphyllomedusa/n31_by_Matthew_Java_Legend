@@ -20,7 +20,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.dto.response.SubserviceTypeResponse
 import ru.spb.n31.n31_by_matthew_java_legend.service.admin.AdminSubservicesService;
 
 @Tag(name = "Admin: Subservices", description = "Управление subservices и их types")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/subservices")

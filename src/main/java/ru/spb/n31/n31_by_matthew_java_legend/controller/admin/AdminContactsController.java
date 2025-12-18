@@ -20,7 +20,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.dto.response.ContactsResponse;
 import ru.spb.n31.n31_by_matthew_java_legend.service.admin.AdminContactsService;
 
 @Tag(name = "Admin: Contacts", description = "Редактирование contacts и description")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/contacts")

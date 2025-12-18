@@ -20,7 +20,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.dto.response.ServiceResponse;
 import ru.spb.n31.n31_by_matthew_java_legend.service.admin.AdminServicesService;
 
 @Tag(name = "Admin: Services", description = "CRUD для services")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/services")

@@ -18,7 +18,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.dto.response.ExampleResponse;
 import ru.spb.n31.n31_by_matthew_java_legend.service.admin.AdminTypeProjectsService;
 
 @Tag(name = "Admin: Type Projects", description = "CRUD для примеров проектов (examples)")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/type-projects")
