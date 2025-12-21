@@ -20,7 +20,7 @@ public class ServicesTypesProjectsApiService {
 
         return typeRepo.findAll().stream()
                 .map(type -> {
-                    var examples = exampleRepo.findAllByType(type.getId()).stream()
+                    var examples = exampleRepo.findAllByType(type).stream()
                             .map(e -> new ExampleResponse(e.getId(), type.getId(), e.getImage()))
                             .toList();
                     return new ServiceTypesProjectResponse(type.getId(), examples);
