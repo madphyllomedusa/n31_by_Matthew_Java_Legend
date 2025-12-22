@@ -47,6 +47,7 @@ public class AdminContactsService {
     }
 
     public ContactResponse create(ContactRequest r) {
+        if (r.id() == null) throw new BadRequestException("Contact id is required");
         if (contactRepo.existsById(r.id())) throw new BadRequestException("Contact exists: " + r.id());
         var c = new ContactEntity();
         c.setId(r.id());
@@ -58,11 +59,27 @@ public class AdminContactsService {
     }
 
     public ContactResponse update(Long id, ContactRequest r) {
-        var c = contactRepo.findById(id).orElseThrow(() -> new NotFoundException("Contact not found: " + id));
-        c.setIcon(r.icon());
-        c.setTitle(r.title());
-        c.setSubtitle(r.subtitle());
-        return new ContactResponse(c.getId(), c.getIcon(), c.getTitle(), c.getSubtitle());
+        var existing = contactRepo.findById(id).orElseThrow(() -> new NotFoundException("Contact not found: " + id));
+
+        if (r.id() != null && !r.id().equals(id)) {
+            if (contactRepo.existsById(r.id())) throw new BadRequestException("Contact exists: " + r.id());
+
+            var replacement = new ContactEntity();
+            replacement.setId(r.id());
+            replacement.setIcon(r.icon());
+            replacement.setTitle(r.title());
+            replacement.setSubtitle(r.subtitle());
+            contactRepo.save(replacement);
+
+            contactRepo.delete(existing);
+            return new ContactResponse(replacement.getId(), replacement.getIcon(), replacement.getTitle(), replacement.getSubtitle());
+        }
+
+        existing.setIcon(r.icon());
+        existing.setTitle(r.title());
+        existing.setSubtitle(r.subtitle());
+        contactRepo.save(existing);
+        return new ContactResponse(existing.getId(), existing.getIcon(), existing.getTitle(), existing.getSubtitle());
     }
 
     public void delete(Long id) {

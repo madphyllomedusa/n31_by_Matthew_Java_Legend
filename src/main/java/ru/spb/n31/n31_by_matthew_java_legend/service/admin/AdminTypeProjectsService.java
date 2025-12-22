@@ -10,13 +10,17 @@ import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceTypeExampleRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceTypeRepository;
 
+import javax.transaction.Transactional;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AdminTypeProjectsService {
     private final ServiceTypeExampleRepository exampleRepo;
     private final SubserviceTypeRepository typeRepo;
 
     public ExampleResponse create(ExampleRequest r) {
+        if (r.id() == null) throw new BadRequestException("Example id is required");
         if (exampleRepo.existsById(r.id())) throw new BadRequestException("Example exists: " + r.id());
         var type = typeRepo.findById(r.typeId()).orElseThrow(() -> new NotFoundException("Type not found: " + r.typeId()));
 
@@ -30,13 +34,27 @@ public class AdminTypeProjectsService {
     }
 
     public ExampleResponse update(String id, ExampleRequest r) {
-        var e = exampleRepo.findById(id).orElseThrow(() -> new NotFoundException("Example not found: " + id));
+        var existing = exampleRepo.findById(id).orElseThrow(() -> new NotFoundException("Example not found: " + id));
         var type = typeRepo.findById(r.typeId()).orElseThrow(() -> new NotFoundException("Type not found: " + r.typeId()));
 
-        e.setImage(r.image());
-        e.setType(type);
+        if (r.id() != null && !r.id().equals(id)) {
+            if (exampleRepo.existsById(r.id())) throw new BadRequestException("Example exists: " + r.id());
 
-        return new ExampleResponse(e.getId(), type.getId(), e.getImage());
+            var replacement = new ServiceTypeExampleEntity();
+            replacement.setId(r.id());
+            replacement.setImage(r.image());
+            replacement.setType(type);
+            exampleRepo.save(replacement);
+
+            exampleRepo.delete(existing);
+            return new ExampleResponse(replacement.getId(), type.getId(), replacement.getImage());
+        }
+
+        existing.setImage(r.image());
+        existing.setType(type);
+        exampleRepo.save(existing);
+
+        return new ExampleResponse(existing.getId(), type.getId(), existing.getImage());
     }
 
     public void delete(String id) {

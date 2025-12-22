@@ -8,6 +8,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.entity.ServiceEntity;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceTypeRepository;
 
 import javax.transaction.Transactional;
 
@@ -17,6 +18,7 @@ import javax.transaction.Transactional;
 public class AdminServicesService {
 
     private final ServiceRepository repo;
+    private final SubserviceTypeRepository typeRepo;
 
 
     @Transactional
@@ -26,6 +28,7 @@ public class AdminServicesService {
     }
 
     public ServiceResponse create(ServiceRequest r) {
+        if (r.id() == null) throw new BadRequestException("Service id is required");
         if (repo.existsById(r.id())) throw new BadRequestException("Service already exists: " + r.id());
         var e = new ServiceEntity();
         e.setId(r.id());
@@ -37,11 +40,30 @@ public class AdminServicesService {
     }
 
     public ServiceResponse update(String id, ServiceRequest r) {
-        var e = repo.findById(id).orElseThrow(() -> new NotFoundException("Service not found: " + id));
-        e.setTitle(r.title());
-        e.setPrice(r.price());
-        e.setImage(r.image());
-        return new ServiceResponse(e.getId(), e.getTitle(), e.getPrice(), e.getImage());
+        var existing = repo.findById(id).orElseThrow(() -> new NotFoundException("Service not found: " + id));
+
+        // Смена id: обновляем зависимые FK (subservice_types.service_id), затем удаляем старую запись.
+        if (r.id() != null && !r.id().equals(id)) {
+            if (repo.existsById(r.id())) throw new BadRequestException("Service already exists: " + r.id());
+
+            var replacement = new ServiceEntity();
+            replacement.setId(r.id());
+            replacement.setTitle(r.title());
+            replacement.setPrice(r.price());
+            replacement.setImage(r.image());
+            repo.save(replacement);
+
+            typeRepo.updateServiceId(id, r.id());
+            repo.delete(existing);
+
+            return new ServiceResponse(replacement.getId(), replacement.getTitle(), replacement.getPrice(), replacement.getImage());
+        }
+
+        existing.setTitle(r.title());
+        existing.setPrice(r.price());
+        existing.setImage(r.image());
+        repo.save(existing);
+        return new ServiceResponse(existing.getId(), existing.getTitle(), existing.getPrice(), existing.getImage());
     }
 
     public void delete(String id) {

@@ -11,6 +11,7 @@ import ru.spb.n31.n31_by_matthew_java_legend.entity.SubserviceTypeEntity;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceTypeExampleRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceTypeRepository;
 
@@ -24,6 +25,7 @@ public class AdminSubservicesService {
     private final SubserviceRepository subRepo;
     private final SubserviceTypeRepository typeRepo;
     private final ServiceRepository serviceRepo;
+    private final ServiceTypeExampleRepository exampleRepo;
 
     public SubserviceResponse createSubservice(SubserviceRequest r) {
         if (subRepo.existsById(r.subserviceId()))
@@ -72,8 +74,8 @@ public class AdminSubservicesService {
     }
 
     public SubserviceTypeResponse updateType(String subserviceId, String typeId, SubserviceTypeRequest r) {
-        var type = typeRepo.findById(typeId).orElseThrow(() -> new NotFoundException("Type not found: " + typeId));
-        if (!type.getSubservice().getId().equals(subserviceId)) {
+        var existing = typeRepo.findById(typeId).orElseThrow(() -> new NotFoundException("Type not found: " + typeId));
+        if (!existing.getSubservice().getId().equals(subserviceId)) {
             throw new BadRequestException("Type " + typeId + " does not belong to subservice " + subserviceId);
         }
 
@@ -81,11 +83,30 @@ public class AdminSubservicesService {
         var service = serviceRepo.findById(r.serviceId())
                 .orElseThrow(() -> new NotFoundException("Service not found: " + r.serviceId()));
 
-        type.setTitle(r.title());
-        type.setImage(r.image());
-        type.setService(service);
+        // Смена id type: сначала создаём новый type, затем обновляем зависимые examples, потом удаляем старый.
+        if (r.id() != null && !r.id().equals(typeId)) {
+            if (typeRepo.existsById(r.id())) throw new BadRequestException("Type exists: " + r.id());
 
-        return new SubserviceTypeResponse(type.getId(), type.getTitle(), type.getImage(), type.getService().getId());
+            var replacement = new SubserviceTypeEntity();
+            replacement.setId(r.id());
+            replacement.setTitle(r.title());
+            replacement.setImage(r.image());
+            replacement.setService(service);
+            replacement.setSubservice(existing.getSubservice());
+            typeRepo.save(replacement);
+
+            exampleRepo.updateTypeId(typeId, r.id());
+            typeRepo.delete(existing);
+
+            return new SubserviceTypeResponse(replacement.getId(), replacement.getTitle(), replacement.getImage(), replacement.getService().getId());
+        }
+
+        existing.setTitle(r.title());
+        existing.setImage(r.image());
+        existing.setService(service);
+        typeRepo.save(existing);
+
+        return new SubserviceTypeResponse(existing.getId(), existing.getTitle(), existing.getImage(), existing.getService().getId());
     }
 
     public void deleteType(String subserviceId, String typeId) {
