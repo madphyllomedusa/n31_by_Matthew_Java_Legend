@@ -9,8 +9,10 @@ import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceTypeRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.util.IdUtils;
 
 import javax.transaction.Transactional;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -23,15 +25,21 @@ public class AdminServicesService {
 
     @Transactional
     public ServiceResponse get(String id) {
-        var e = repo.findById(id).orElseThrow(() -> new NotFoundException("Service not found: " + id));
+        final String idVal = IdUtils.nullIfBlank(id);
+        if (idVal == null) throw new BadRequestException("Service id is required");
+        var e = repo.findById(idVal).orElseThrow(() -> new NotFoundException("Service not found: " + idVal));
         return new ServiceResponse(e.getId(), e.getTitle(), e.getPrice(), e.getImage());
     }
 
     public ServiceResponse create(ServiceRequest r) {
-        if (r.id() == null) throw new BadRequestException("Service id is required");
-        if (repo.existsById(r.id())) throw new BadRequestException("Service already exists: " + r.id());
+        String newId = IdUtils.nullIfBlank(r.id());
+        if (newId == null) {
+            newId = IdUtils.nextNumericStringId(repo.findAll().stream().map(ServiceEntity::getId));
+        }
+        newId = Objects.requireNonNull(newId, "newId");
+        if (repo.existsById(newId)) throw new BadRequestException("Service already exists: " + newId);
         var e = new ServiceEntity();
-        e.setId(r.id());
+        e.setId(newId);
         e.setTitle(r.title());
         e.setPrice(r.price());
         e.setImage(r.image());
@@ -40,20 +48,23 @@ public class AdminServicesService {
     }
 
     public ServiceResponse update(String id, ServiceRequest r) {
-        var existing = repo.findById(id).orElseThrow(() -> new NotFoundException("Service not found: " + id));
+        final String idVal = IdUtils.nullIfBlank(id);
+        if (idVal == null) throw new BadRequestException("Service id is required");
+        var existing = repo.findById(idVal).orElseThrow(() -> new NotFoundException("Service not found: " + idVal));
 
         // Смена id: обновляем зависимые FK (subservice_types.service_id), затем удаляем старую запись.
-        if (r.id() != null && !r.id().equals(id)) {
-            if (repo.existsById(r.id())) throw new BadRequestException("Service already exists: " + r.id());
+        String requestedId = IdUtils.nullIfBlank(r.id());
+        if (requestedId != null && !requestedId.equals(idVal)) {
+            if (repo.existsById(requestedId)) throw new BadRequestException("Service already exists: " + requestedId);
 
             var replacement = new ServiceEntity();
-            replacement.setId(r.id());
+            replacement.setId(requestedId);
             replacement.setTitle(r.title());
             replacement.setPrice(r.price());
             replacement.setImage(r.image());
             repo.save(replacement);
 
-            typeRepo.updateServiceId(id, r.id());
+            typeRepo.updateServiceId(idVal, requestedId);
             repo.delete(existing);
 
             return new ServiceResponse(replacement.getId(), replacement.getTitle(), replacement.getPrice(), replacement.getImage());
@@ -67,7 +78,9 @@ public class AdminServicesService {
     }
 
     public void delete(String id) {
-        if (!repo.existsById(id)) return;
-        repo.deleteById(id);
+        final String idVal = IdUtils.nullIfBlank(id);
+        if (idVal == null) return;
+        if (!repo.existsById(idVal)) return;
+        repo.deleteById(idVal);
     }
 }

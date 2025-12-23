@@ -9,8 +9,10 @@ import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceTypeExampleRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceTypeRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.util.IdUtils;
 
 import javax.transaction.Transactional;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -20,12 +22,16 @@ public class AdminTypeProjectsService {
     private final SubserviceTypeRepository typeRepo;
 
     public ExampleResponse create(ExampleRequest r) {
-        if (r.id() == null) throw new BadRequestException("Example id is required");
-        if (exampleRepo.existsById(r.id())) throw new BadRequestException("Example exists: " + r.id());
+        String exampleId = IdUtils.nullIfBlank(r.id());
+        if (exampleId == null) {
+            exampleId = IdUtils.nextNumericStringId(exampleRepo.findAll().stream().map(ServiceTypeExampleEntity::getId));
+        }
+        exampleId = Objects.requireNonNull(exampleId, "exampleId");
+        if (exampleRepo.existsById(exampleId)) throw new BadRequestException("Example exists: " + exampleId);
         var type = typeRepo.findById(r.typeId()).orElseThrow(() -> new NotFoundException("Type not found: " + r.typeId()));
 
         var e = new ServiceTypeExampleEntity();
-        e.setId(r.id());
+        e.setId(exampleId);
         e.setImage(r.image());
         e.setType(type);
 
@@ -34,14 +40,17 @@ public class AdminTypeProjectsService {
     }
 
     public ExampleResponse update(String id, ExampleRequest r) {
-        var existing = exampleRepo.findById(id).orElseThrow(() -> new NotFoundException("Example not found: " + id));
+        final String idVal = IdUtils.nullIfBlank(id);
+        if (idVal == null) throw new BadRequestException("Example id is required");
+        var existing = exampleRepo.findById(idVal).orElseThrow(() -> new NotFoundException("Example not found: " + idVal));
         var type = typeRepo.findById(r.typeId()).orElseThrow(() -> new NotFoundException("Type not found: " + r.typeId()));
 
-        if (r.id() != null && !r.id().equals(id)) {
-            if (exampleRepo.existsById(r.id())) throw new BadRequestException("Example exists: " + r.id());
+        String requestedId = IdUtils.nullIfBlank(r.id());
+        if (requestedId != null && !requestedId.equals(idVal)) {
+            if (exampleRepo.existsById(requestedId)) throw new BadRequestException("Example exists: " + requestedId);
 
             var replacement = new ServiceTypeExampleEntity();
-            replacement.setId(r.id());
+            replacement.setId(requestedId);
             replacement.setImage(r.image());
             replacement.setType(type);
             exampleRepo.save(replacement);
@@ -58,7 +67,9 @@ public class AdminTypeProjectsService {
     }
 
     public void delete(String id) {
-        if (!exampleRepo.existsById(id)) return;
-        exampleRepo.deleteById(id);
+        final String idVal = IdUtils.nullIfBlank(id);
+        if (idVal == null) return;
+        if (!exampleRepo.existsById(idVal)) return;
+        exampleRepo.deleteById(idVal);
     }
 }

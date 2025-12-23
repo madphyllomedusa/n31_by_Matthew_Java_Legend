@@ -11,8 +11,10 @@ import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ContactMetaRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ContactRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.util.IdUtils;
 
 import javax.transaction.Transactional;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -47,10 +49,14 @@ public class AdminContactsService {
     }
 
     public ContactResponse create(ContactRequest r) {
-        if (r.id() == null) throw new BadRequestException("Contact id is required");
-        if (contactRepo.existsById(r.id())) throw new BadRequestException("Contact exists: " + r.id());
+        Long contactId = r.id();
+        if (contactId == null) {
+            contactId = IdUtils.nextLongId(contactRepo.findAll().stream().map(ContactEntity::getId));
+        }
+        contactId = Objects.requireNonNull(contactId, "contactId");
+        if (contactRepo.existsById(contactId)) throw new BadRequestException("Contact exists: " + contactId);
         var c = new ContactEntity();
-        c.setId(r.id());
+        c.setId(contactId);
         c.setIcon(r.icon());
         c.setTitle(r.title());
         c.setSubtitle(r.subtitle());
@@ -59,6 +65,7 @@ public class AdminContactsService {
     }
 
     public ContactResponse update(Long id, ContactRequest r) {
+        if (id == null) throw new BadRequestException("Contact id is required");
         var existing = contactRepo.findById(id).orElseThrow(() -> new NotFoundException("Contact not found: " + id));
 
         if (r.id() != null && !r.id().equals(id)) {
@@ -83,6 +90,7 @@ public class AdminContactsService {
     }
 
     public void delete(Long id) {
+        if (id == null) return;
         if (!contactRepo.existsById(id)) return;
         contactRepo.deleteById(id);
     }

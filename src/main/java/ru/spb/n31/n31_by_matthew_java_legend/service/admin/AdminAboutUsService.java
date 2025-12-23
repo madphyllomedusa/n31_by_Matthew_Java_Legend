@@ -12,8 +12,10 @@ import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.AboutUsStatsRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.AboutUsTextRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.util.IdUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -48,10 +50,14 @@ public class AdminAboutUsService {
 
     @Transactional
     public AboutUsStatResponse createStat(AboutUsStatRequest r) {
-        if (r.id() == null) throw new BadRequestException("Stat id is required");
-        if (statsRepo.existsById(r.id())) throw new BadRequestException("Stat exists: " + r.id());
+        Long statId = r.id();
+        if (statId == null) {
+            statId = IdUtils.nextLongId(statsRepo.findAll().stream().map(AboutUsStatsEntity::getId));
+        }
+        statId = Objects.requireNonNull(statId, "statId");
+        if (statsRepo.existsById(statId)) throw new BadRequestException("Stat exists: " + statId);
         var s = new AboutUsStatsEntity();
-        s.setId(r.id());
+        s.setId(statId);
         s.setUpper(r.upper());
         s.setLower(r.lower());
         statsRepo.save(s);
@@ -60,6 +66,7 @@ public class AdminAboutUsService {
 
     @Transactional
     public AboutUsStatResponse updateStat(Long id, AboutUsStatRequest r) {
+        if (id == null) throw new BadRequestException("Stat id is required");
         var existing = statsRepo.findById(id).orElseThrow(() -> new NotFoundException("Stat not found: " + id));
 
         // Если в реквесте пришёл другой id — делаем "переименование" PK через insert+delete (JPA не поддерживает смену @Id у managed entity).
@@ -84,6 +91,7 @@ public class AdminAboutUsService {
 
     @Transactional
     public void deleteStat(Long id) {
+        if (id == null) return;
         if (!statsRepo.existsById(id)) return;
         statsRepo.deleteById(id);
     }
