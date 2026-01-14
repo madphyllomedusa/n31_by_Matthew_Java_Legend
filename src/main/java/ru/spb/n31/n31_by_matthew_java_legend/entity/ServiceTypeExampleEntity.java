@@ -18,6 +18,12 @@ public class ServiceTypeExampleEntity {
     @Id
     private String id;
 
+    private String title;
+
+    private String description;
+
+    private Integer price;
+
     private String image;
 
     @ManyToOne

@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface SubserviceTypeRepository extends JpaRepository<SubserviceTypeEntity, String> {
     List<SubserviceTypeEntity> findAllBySubservice_Id(String subserviceId);
+    List<SubserviceTypeEntity> findAllByService_Id(String serviceId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "update subservice_types set service_id = :newId where service_id = :oldId", nativeQuery = true)

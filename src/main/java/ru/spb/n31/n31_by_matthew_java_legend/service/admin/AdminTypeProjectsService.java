@@ -32,11 +32,14 @@ public class AdminTypeProjectsService {
 
         var e = new ServiceTypeExampleEntity();
         e.setId(exampleId);
+        e.setTitle(r.title());
+        e.setDescription(r.description());
+        e.setPrice(r.price());
         e.setImage(r.image());
         e.setType(type);
 
         exampleRepo.save(e);
-        return new ExampleResponse(e.getId(), type.getId(), e.getImage());
+        return new ExampleResponse(e.getId(), type.getId(), e.getTitle(), e.getDescription(), e.getPrice(), e.getImage());
     }
 
     public ExampleResponse update(String id, ExampleRequest r) {
@@ -51,19 +54,27 @@ public class AdminTypeProjectsService {
 
             var replacement = new ServiceTypeExampleEntity();
             replacement.setId(requestedId);
+            replacement.setTitle(r.title());
+            replacement.setDescription(r.description());
+            replacement.setPrice(r.price());
             replacement.setImage(r.image());
             replacement.setType(type);
             exampleRepo.save(replacement);
 
             exampleRepo.delete(existing);
-            return new ExampleResponse(replacement.getId(), type.getId(), replacement.getImage());
+            return new ExampleResponse(replacement.getId(), type.getId(), replacement.getTitle(), replacement.getDescription(), replacement.getPrice(), replacement.getImage());
         }
 
-        existing.setImage(r.image());
+        existing.setTitle(r.title());
+        existing.setDescription(r.description());
+        existing.setPrice(r.price());
+        if (r.image() != null) {
+            existing.setImage(r.image());
+        }
         existing.setType(type);
         exampleRepo.save(existing);
 
-        return new ExampleResponse(existing.getId(), type.getId(), existing.getImage());
+        return new ExampleResponse(existing.getId(), type.getId(), existing.getTitle(), existing.getDescription(), existing.getPrice(), existing.getImage());
     }
 
     public void delete(String id) {

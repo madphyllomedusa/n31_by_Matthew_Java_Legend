@@ -25,7 +25,14 @@ public class ServicesTypesProjectsApiService {
                 .map(type -> {
                     var examples = exampleRepo.findAllByType(type).stream()
                             .sorted(Comparator.comparing(e -> e.getId(), IdUtils.numericStringComparator()))
-                            .map(e -> new ExampleResponse(e.getId(), type.getId(), e.getImage()))
+                            .map(e -> new ExampleResponse(
+                                    e.getId(),
+                                    type.getId(),
+                                    e.getTitle(),
+                                    e.getDescription(),
+                                    e.getPrice(),
+                                    e.getImage()
+                            ))
                             .toList();
                     return new ServiceTypesProjectResponse(type.getId(), examples);
                 })

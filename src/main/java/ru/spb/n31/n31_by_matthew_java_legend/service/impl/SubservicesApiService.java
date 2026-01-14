@@ -32,7 +32,14 @@ public class SubservicesApiService {
                                     t.getService().getId()
                             ))
                             .toList();
-                    return new SubserviceResponse(sub.getId(), types);
+                    return new SubserviceResponse(
+                            sub.getId(),
+                            sub.getTitle(),
+                            sub.getDescription(),
+                            sub.getWorkHours(),
+                            sub.getAveragePrice(),
+                            types
+                    );
                 })
                 .toList();
     }

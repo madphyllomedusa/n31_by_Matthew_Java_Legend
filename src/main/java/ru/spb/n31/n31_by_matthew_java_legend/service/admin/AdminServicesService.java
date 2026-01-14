@@ -5,13 +5,16 @@ import org.springframework.stereotype.Service;
 import ru.spb.n31.n31_by_matthew_java_legend.dto.request.ServiceRequest;
 import ru.spb.n31.n31_by_matthew_java_legend.dto.response.ServiceResponse;
 import ru.spb.n31.n31_by_matthew_java_legend.entity.ServiceEntity;
+import ru.spb.n31.n31_by_matthew_java_legend.entity.SubserviceTypeEntity;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.BadRequestException;
 import ru.spb.n31.n31_by_matthew_java_legend.exception.NotFoundException;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceRepository;
+import ru.spb.n31.n31_by_matthew_java_legend.repository.ServiceTypeExampleRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.repository.SubserviceTypeRepository;
 import ru.spb.n31.n31_by_matthew_java_legend.util.IdUtils;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -21,6 +24,7 @@ public class AdminServicesService {
 
     private final ServiceRepository repo;
     private final SubserviceTypeRepository typeRepo;
+    private final ServiceTypeExampleRepository exampleRepo;
 
 
     @Transactional
@@ -72,7 +76,9 @@ public class AdminServicesService {
 
         existing.setTitle(r.title());
         existing.setPrice(r.price());
-        existing.setImage(r.image());
+        if (r.image() != null) {
+            existing.setImage(r.image());
+        }
         repo.save(existing);
         return new ServiceResponse(existing.getId(), existing.getTitle(), existing.getPrice(), existing.getImage());
     }
@@ -81,6 +87,11 @@ public class AdminServicesService {
         final String idVal = IdUtils.nullIfBlank(id);
         if (idVal == null) return;
         if (!repo.existsById(idVal)) return;
+        List<SubserviceTypeEntity> types = typeRepo.findAllByService_Id(idVal);
+        for (SubserviceTypeEntity type : types) {
+            exampleRepo.deleteAllByType_Id(type.getId());
+        }
+        typeRepo.deleteAll(types);
         repo.deleteById(idVal);
     }
 }

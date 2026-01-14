@@ -40,6 +40,10 @@ public class AdminSubservicesService {
             throw new BadRequestException("Subservice exists: " + subId);
         var sub = new SubserviceEntity();
         sub.setId(subId);
+        sub.setTitle(r.title());
+        sub.setDescription(r.description());
+        sub.setWorkHours(r.workHours());
+        sub.setAveragePrice(r.averagePrice());
         subRepo.save(sub);
 
         // если пришли types — создадим сразу
@@ -48,7 +52,44 @@ public class AdminSubservicesService {
         }
 
         return new SubserviceResponse(sub.getId(),
+                sub.getTitle(),
+                sub.getDescription(),
+                sub.getWorkHours(),
+                sub.getAveragePrice(),
                 typeRepo.findAllBySubservice_Id(sub.getId()).stream()
+                        .sorted(Comparator.comparing(SubserviceTypeEntity::getId, IdUtils.numericStringComparator()))
+                        .map(t -> new SubserviceTypeResponse(t.getId(), t.getTitle(), t.getImage(), t.getService().getId()))
+                        .toList()
+        );
+    }
+
+    public SubserviceResponse updateSubservice(String subserviceId, SubserviceRequest r) {
+        final String subserviceIdVal = IdUtils.nullIfBlank(subserviceId);
+        if (subserviceIdVal == null) throw new BadRequestException("Subservice id is required");
+        var existing = subRepo.findById(subserviceIdVal)
+                .orElseThrow(() -> new NotFoundException("Subservice not found: " + subserviceIdVal));
+
+        if (r.title() != null) {
+            existing.setTitle(r.title());
+        }
+        if (r.description() != null) {
+            existing.setDescription(r.description());
+        }
+        if (r.workHours() != null) {
+            existing.setWorkHours(r.workHours());
+        }
+        if (r.averagePrice() != null) {
+            existing.setAveragePrice(r.averagePrice());
+        }
+
+        subRepo.save(existing);
+
+        return new SubserviceResponse(existing.getId(),
+                existing.getTitle(),
+                existing.getDescription(),
+                existing.getWorkHours(),
+                existing.getAveragePrice(),
+                typeRepo.findAllBySubservice_Id(existing.getId()).stream()
                         .sorted(Comparator.comparing(SubserviceTypeEntity::getId, IdUtils.numericStringComparator()))
                         .map(t -> new SubserviceTypeResponse(t.getId(), t.getTitle(), t.getImage(), t.getService().getId()))
                         .toList()
@@ -59,6 +100,9 @@ public class AdminSubservicesService {
         if (!subRepo.existsById(subserviceId)) return;
         // сначала удаляем types, иначе FK
         var types = typeRepo.findAllBySubservice_Id(subserviceId);
+        for (var type : types) {
+            exampleRepo.deleteAllByType_Id(type.getId());
+        }
         typeRepo.deleteAll(types);
         subRepo.deleteById(subserviceId);
     }
@@ -124,7 +168,9 @@ public class AdminSubservicesService {
         }
 
         existing.setTitle(r.title());
-        existing.setImage(r.image());
+        if (r.image() != null) {
+            existing.setImage(r.image());
+        }
         existing.setService(service);
         typeRepo.save(existing);
 
@@ -140,6 +186,7 @@ public class AdminSubservicesService {
         if (!type.getSubservice().getId().equals(subserviceIdVal)) {
             throw new BadRequestException("Type " + typeIdVal + " does not belong to subservice " + subserviceIdVal);
         }
+        exampleRepo.deleteAllByType_Id(typeIdVal);
         typeRepo.delete(type);
     }
 }

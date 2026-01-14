@@ -135,6 +135,11 @@ public class InitialDataLoader {
         return (v == null || v.isNull()) ? null : v.asText(null);
     }
 
+    private Integer optInt(JsonNode node, String field) {
+        JsonNode v = node.get(field);
+        return (v == null || v.isNull() || !v.canConvertToInt()) ? null : v.asInt();
+    }
+
     /* ===================== loaders ===================== */
 
     private void loadServices() throws Exception {
@@ -174,6 +179,10 @@ public class InitialDataLoader {
             if (sub == null) {
                 sub = new SubserviceEntity();
                 sub.setId(subId);
+                sub.setTitle(optText(s, "title"));
+                sub.setDescription(optText(s, "description"));
+                sub.setWorkHours(optText(s, "workHours"));
+                sub.setAveragePrice(optInt(s, "averagePrice"));
                 subserviceRepo.save(sub);
                 subInserted++;
             }
@@ -233,6 +242,9 @@ public class InitialDataLoader {
 
                 ServiceTypeExampleEntity e = new ServiceTypeExampleEntity();
                 e.setId(exId);
+                e.setTitle(optText(ex, "title"));
+                e.setDescription(optText(ex, "description"));
+                e.setPrice(optInt(ex, "price"));
                 e.setImage(optText(ex, "image"));
                 e.setType(type);
 

@@ -12,6 +12,7 @@ import java.util.List;
 public interface ServiceTypeExampleRepository
         extends JpaRepository<ServiceTypeExampleEntity, String> {
     List<ServiceTypeExampleEntity> findAllByType(SubserviceTypeEntity type);
+    void deleteAllByType_Id(String typeId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "update service_type_examples set type_id = :newTypeId where type_id = :oldTypeId", nativeQuery = true)
